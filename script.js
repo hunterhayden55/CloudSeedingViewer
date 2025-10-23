@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', function () {
         timer: null,
         currentIndex: 0,
         radarMeta: null,
-        currentFlightId: null
+        currentFlightId: null,
+        currentRadarFile: null
     };
 
     // --- Initialization ---
@@ -40,12 +41,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- Data Loading ---
+    // --- DATA LOADING (Reverted to simple version) ---
     async function loadFlight(flightId) {
         resetMap();
         animationState.currentFlightId = flightId;
 
         try {
+            // Fetch flight data
             const flightResponse = await fetch(`processed_data/${flightId}/flight_data.geojson`);
             const geojsonData = await flightResponse.json();
             
@@ -54,8 +56,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 points: geojsonData.features.filter(f => f.geometry.type === 'Point')
             };
 
+            // Fetch the single, complete radar metadata file
             const metaResponse = await fetch(`processed_data/${flightId}/radar_meta.json`);
             animationState.radarMeta = await metaResponse.json();
+            // Sorting is still good practice, though the Python script should handle it
+            animationState.radarMeta.frames.sort((a, b) => new Date(a.time) - new Date(b.time));
 
             drawFlightPath();
             setupAnimation();
@@ -64,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } catch (error) {
             console.error(`Error loading data for flight ${flightId}:`, error);
-            alert(`Could not load data for this flight. Make sure flight_data.geojson and radar_meta.json exist.`);
+            alert(`Could not load data for this flight. Make sure flight_data.geojson and radar_meta.json exist and are correctly formatted.`);
         }
     }
 
@@ -78,10 +83,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setupAnimation() {
         const startPoint = flightData.points[0].geometry.coordinates;
-        airplaneMarker = L.circleMarker([startPoint[1], startPoint[0]], { radius: 6, color: 'black', weight: 1, fillOpacity: 1.0 }).addTo(map);
+        airplaneMarker = L.circleMarker([startPoint[1], start_point[0]], { radius: 6, color: 'black', weight: 1, fillOpacity: 1.0 }).addTo(map);
 
-        const radarImageUrl = `processed_data/${animationState.currentFlightId}/radar_frames/frame_0.png`;
+        const firstFrameFile = animationState.radarMeta.frames[0].file;
+        const radarImageUrl = `processed_data/${animationState.currentFlightId}/radar_frames/${firstFrameFile}`;
         radarOverlay = L.imageOverlay(radarImageUrl, animationState.radarMeta.bounds).addTo(map);
+        animationState.currentRadarFile = firstFrameFile;
 
         const slider = document.getElementById('timeline-slider');
         slider.max = flightData.points.length - 1;
@@ -104,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 nextIndex = 0; // Loop animation
             }
             updateFrame(nextIndex);
-        }, 50); // Faster update for smoother plane movement (20fps)
+        }, 50);
     }
 
     function pauseAnimation() {
@@ -120,37 +127,37 @@ document.addEventListener('DOMContentLoaded', function () {
         const point = flightData.points[pointIndex];
         if (!point) return;
 
-        // Find the correct radar frame for the current point's timestamp
         const pointTime = new Date(point.properties.timestamp_iso);
-        let radarFrameIndex = 0;
-        for (let i = animationState.radarMeta.timestamps.length - 1; i >= 0; i--) {
-            const radarTime = new Date(animationState.radarMeta.timestamps[i]);
-            if (pointTime >= radarTime) {
-                radarFrameIndex = i;
+        let correctFrame = animationState.radarMeta.frames[0];
+        for (const frame of animationState.radarMeta.frames) {
+            if (new Date(frame.time) <= pointTime) {
+                correctFrame = frame;
+            } else {
                 break;
             }
         }
         
-        const newImageUrl = `processed_data/${animationState.currentFlightId}/radar_frames/frame_${radarFrameIndex}.png`;
-        if (radarOverlay.getUrl() !== newImageUrl) {
+        if (animationState.currentRadarFile !== correctFrame.file) {
+            const newImageUrl = `processed_data/${animationState.currentFlightId}/radar_frames/${correctFrame.file}`;
             radarOverlay.setUrl(newImageUrl);
+            animationState.currentRadarFile = correctFrame.file;
         }
 
-        // Update airplane position
         const coords = point.geometry.coordinates;
         airplaneMarker.setLatLng([coords[1], coords[0]]);
         
-        // Update marker color based on seeding type
         const type = point.properties.seeding_type;
-        let color = '#ff7800'; // Default: orange
-        if (type === 'BIP') color = '#ff00ff'; // Magenta
-        else if (type === 'Eject') color = '#ffff00'; // Yellow
-        else if (type === 'Generator') color = '#00ffff'; // Cyan
+        let color = '#ff7800';
+        if (type === 'BIP') color = '#ff00ff';
+        else if (type === 'Eject') color = '#ffff00';
+        else if (type === 'Generator') color = '#00ffff';
         airplaneMarker.setStyle({ fillColor: color });
 
-        // Update UI
         document.getElementById('timeline-slider').value = pointIndex;
-        document.getElementById('timestamp-display').textContent = pointTime.toLocaleTimeString();
+        
+        const pstTime = pointTime.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles' });
+        const utcTime = pointTime.toLocaleTimeString('en-GB', { timeZone: 'UTC' });
+        document.getElementById('timestamp-display').textContent = `${pstTime} PST | ${utcTime} UTC`;
     }
     
     function resetMap() {
@@ -160,6 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (radarOverlay) map.removeLayer(radarOverlay);
         flightData = null;
         animationState.currentIndex = 0;
+        animationState.currentRadarFile = null;
         document.getElementById('animation-controls').classList.add('hidden');
         document.getElementById('timeline-slider').disabled = true;
     }

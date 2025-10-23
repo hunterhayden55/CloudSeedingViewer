@@ -11,25 +11,44 @@ RAW_DATA_DIR = Path("raw_data")
 PROCESSED_DATA_DIR = Path("processed_data")
 # ---------------------
 
+# --- NEW: ROBUST SEEDING CLASSIFICATION FUNCTION ---
+def classify_seeding_event(row):
+    """
+    Determines the seeding type and count for a single row of data.
+    Priority: BIP > Eject > Generator.
+    """
+    # Check for BIP flare drops first
+    if row['bip_drops'] > 0:
+        return 'BIP', row['bip_drops']
+    # Then check for Ejectable flare drops
+    elif row['eject_drops'] > 0:
+        return 'Eject', row['eject_drops']
+    # Finally, check if generators are on
+    elif row['is_generator']:
+        return 'Generator', 1 # Count for generators is always 1 (representing "on")
+    # Otherwise, no seeding event
+    else:
+        return 'None', 0
+
 def process_single_flight(flight_id, flight_date_str, input_csv_path, output_dir):
     """
-    Reads a single raw flight CSV, processes it using the CORRECTED column mapping
-    and robust seeding logic, and exports a GeoJSON file.
+    Reads a single raw flight CSV, processes it using robust logic,
+    and exports a GeoJSON file with accurate seeding type and count.
     """
     print(f"  Processing flight {flight_id}...")
 
-    # --- CORRECTED COLUMN MAPPING ---
-    # This mapping aligns with the CSV data provided.
+    # --- DEFINITIVELY CORRECTED COLUMN MAPPING ---
+    # This mapping aligns with the logical structure of the Presentation/ASCII data.
     column_names = [
         'time', 'n_number', 'latitude', 'longitude', 'gs_ms',
         'warning', 'gps_alt_ft', 'temp_c', 'lwc_g_cm3',
-        'bip_active', 'bip_count', 'eject_active', 'right_gen', # Eject_count is NOT here
-        'eject_count', 'left_gen', 'ice', 'spare'             # Eject_count IS here
+        'bip_active', 'bip_count', 'eject_active', 'eject_count',
+        'right_gen', 'left_gen', 'ice', 'spare'
     ]
     # --- END CORRECTION ---
 
     try:
-        df = pd.read_csv(input_csv_path, header=None, names=column_names, dtype=str)
+        df = pd.read_csv(input_csv_path, header=None, names=column_names, dtype=str, on_bad_lines='skip')
     except Exception as e:
         print(f"    ERROR: Could not read file. Reason: {e}")
         return None
@@ -38,32 +57,44 @@ def process_single_flight(flight_id, flight_date_str, input_csv_path, output_dir
     df['timestamp'] = pd.to_datetime(f"{flight_date_str} " + df['time'], errors='coerce')
     df.sort_values(by='timestamp', inplace=True)
 
+    # Convert only the necessary columns to numeric, coercing errors
     numeric_cols = [
         'latitude', 'longitude', 'bip_count', 'eject_count', 'right_gen', 'left_gen'
     ]
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
     
-    df.dropna(subset=['timestamp', 'latitude', 'longitude'], inplace=True)
+    # Drop rows where essential data is missing AFTER conversion
+    df.dropna(subset=['timestamp', 'latitude', 'longitude', 'bip_count', 'eject_count'], inplace=True)
     df = df[(df['latitude'] != 0) & (df['longitude'] != 0)].copy()
 
     if df.empty:
         print("    WARNING: No valid data after cleaning. Skipping.")
         return None
 
-    # --- CATEGORICAL SEEDING LOGIC (Now using correct columns) ---
-    conditions = [
-        df['bip_count'].diff().fillna(0) > 0,
-        df['eject_count'].diff().fillna(0) > 0,
-        (df['right_gen'] == 1) | (df['left_gen'] == 1)
-    ]
-    choices = ['BIP', 'Eject', 'Generator']
-    df['seeding_type'] = np.select(conditions, choices, default='None')
+    # --- NEW ROBUST SEEDING LOGIC ---
+    # 1. Calculate the number of flares dropped at each time step.
+    #    This correctly handles multiple drops (e.g., count jumping from 42 to 44).
+    df['bip_drops'] = df['bip_count'].diff().fillna(0).astype(int)
+    df['eject_drops'] = df['eject_count'].diff().fillna(0).astype(int)
+
+    # 2. Determine the generator state for each time step.
+    df['is_generator'] = (df['right_gen'] == 1) | (df['left_gen'] == 1)
+
+    # 3. Apply the classification function to each row to get type and count.
+    #    The result is two new columns: 'seeding_type' and 'seeding_count'.
+    df[['seeding_type', 'seeding_count']] = df.apply(
+        classify_seeding_event, axis=1, result_type='expand'
+    )
+    # --- END NEW LOGIC ---
     
     # --- GeoJSON Creation ---
     points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude), crs="EPSG:4326")
-    points_gdf['timestamp_iso'] = points_gdf['timestamp'].apply(lambda x: x.isoformat())
-    animated_points_gdf = points_gdf[['geometry', 'timestamp_iso', 'seeding_type']]
+    points_gdf['timestamp_iso'] = points_gdf['timestamp'].apply(lambda x: x.isoformat() + "Z")
+    
+    # Include the new 'seeding_count' in the GeoJSON properties
+    animated_points_gdf = points_gdf[['geometry', 'timestamp_iso', 'seeding_type', 'seeding_count']]
+    
     line_geometry = LineString(points_gdf.geometry.tolist())
     line_gdf = gpd.GeoDataFrame([{'geometry': line_geometry}], crs="EPSG:4326")
 
@@ -86,7 +117,7 @@ def process_single_flight(flight_id, flight_date_str, input_csv_path, output_dir
 
 # The main() function remains the same.
 def main():
-    print("--- Starting Batch Processing (Corrected Columns v6) ---")
+    print("--- Starting Batch Processing (Robust Seeding Logic v2) ---")
     if not RAW_DATA_DIR.exists():
         print(f"ERROR: Raw data directory not found at '{RAW_DATA_DIR}'.")
         return
