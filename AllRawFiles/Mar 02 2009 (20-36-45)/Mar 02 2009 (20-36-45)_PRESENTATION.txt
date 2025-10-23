@@ -1,0 +1,96 @@
+  Weather Modification, Inc. - Data Collected at 20:36:45
+  Time       N-Number        Latitude      Longitude       GS (m/s)
+  Warning    GPS. Alt(ft)    LWC(g/cm^3)
+  BIP        Count           Eject         Count
+ Right Gen    Left Gen             
+---------------------------------------------------------------------
+  20:36:45   N457DM          N0.0000       E0.0000         0
+  No         0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:46   N457DM          N0.0000       E0.0000         0
+  No         0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:47   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:48   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:49   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:50   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:51   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:52   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:53   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:54   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:55   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:56   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:57   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:58   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:36:59   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:37:00   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  Weather Modification, Inc. - Data Collected at 20:37:01
+  Time       N-Number        Latitude      Longitude       GS (m/s)
+  Warning    GPS. Alt(ft)    LWC(g/cm^3)
+  BIP        Count           Eject         Count
+ Right Gen    Left Gen             
+---------------------------------------------------------------------
+  20:37:01   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:37:02   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:37:03   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:37:04   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
+  20:37:04   N457DM          N38.6573      W121.4004       0
+  Yes        0.00            0.00
+  No         0               No            0
+  No         No              No 
