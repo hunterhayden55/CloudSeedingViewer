@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Seeding Flight Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="map"></div>
+    <div id="controls">
+        <h1>Cloud Seeding Flight Viewer</h1>
+        <label for="flight-select">Select a Flight:</label>
+        <select id="flight-select">
+            <option value="">-- Please choose a flight --</option>
+        </select>
+        <div id="animation-controls" class="hidden">
+            <button id="play-pause-btn">Play</button>
+            <input type="range" id="timeline-slider" min="0" value="0" disabled>
+            <span id="timestamp-display"></span>
+        </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

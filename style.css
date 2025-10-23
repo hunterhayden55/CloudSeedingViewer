@@ -1,0 +1,21 @@
+body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+#map { height: 100%; width: 100%; background-color: #ddd; }
+#controls {
+    position: absolute; top: 10px; left: 50px; z-index: 1000;
+    background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2); max-width: 400px;
+}
+h1 { margin: 0 0 10px 0; font-size: 1.2em; }
+#flight-select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+#animation-controls { margin-top: 15px; display: flex; align-items: center; gap: 10px; }
+#animation-controls.hidden { display: none; }
+#timeline-slider { flex-grow: 1; }
+#play-pause-btn {
+    padding: 8px 12px; border: none; background-color: #007bff;
+    color: white; border-radius: 4px; cursor: pointer;
+}
+#play-pause-btn.playing { background-color: #dc3545; }
+#timestamp-display { font-size: 0.9em; font-family: monospace; min-width: 150px; }
